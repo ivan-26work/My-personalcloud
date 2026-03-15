@@ -1,0 +1,432 @@
+/* ===== auth.css ===== */
+/* Style 3 - Néomorphique (ombres douces, fusion rose/bleu) */
+/* Identique au style de index.css pour harmonie parfaite */
+
+/* --------------------------------------------- */
+/* RESET & VARIABLES                             */
+/* --------------------------------------------- */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-blue: #4a90e2;
+  --primary-pink: #ff7e9f;
+  --gradient-main: linear-gradient(135deg, #4a90e2, #ff7e9f);
+  --gradient-pink-dominant: linear-gradient(135deg, #ff7e9f, #4a90e2);
+  --bg-soft: #eef0f5;
+  --neu-shadow-light: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --neu-shadow-medium: 10px 10px 20px #d1d9e6, -10px -10px 20px #ffffff;
+  --neu-shadow-strong: 12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff;
+  --neu-shadow-small: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+  --neu-shadow-inset: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff;
+  --neu-shadow-inset-small: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff;
+  --text-dark: #2c3e50;
+  --text-light: #6c7a8d;
+  --border-neu: 1px solid rgba(255,255,255,0.3);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-soft);
+  min-height: 100vh;
+  padding: 70px 20px 30px 20px;
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------- */
+/* HEADER NÉOMORPHIQUE (identique à index)       */
+/* --------------------------------------------- */
+
+.header {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  height: 70px;
+  background: var(--bg-soft);
+  border-radius: 40px;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--neu-shadow-light);
+  border: var(--border-neu);
+  z-index: 1000;
+}
+
+.logo-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--gradient-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--neu-shadow-small);
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.logo-circle img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.site-name-3d {
+  font-size: 1.3rem;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  border-radius: 40px;
+  background: var(--bg-soft);
+  box-shadow: var(--neu-shadow-small);
+  color: var(--text-dark);
+  margin: 0 0.5rem;
+}
+
+/* --------------------------------------------- */
+/* MAIN CONTENT                                  */
+/* --------------------------------------------- */
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --------------------------------------------- */
+/* CARTE AUTH NÉOMORPHIQUE                       */
+/* --------------------------------------------- */
+
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-soft);
+  border-radius: 50px;
+  padding: 2.5rem 2rem;
+  box-shadow: var(--neu-shadow-medium);
+  border: var(--border-neu);
+}
+
+/* --------------------------------------------- */
+/* ONGLETS NÉOMORPHIQUES                         */
+/* --------------------------------------------- */
+
+.auth-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg-soft);
+  padding: 0.5rem;
+  border-radius: 50px;
+  box-shadow: var(--neu-shadow-inset-small);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  background: transparent;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  background: var(--gradient-pink-dominant);
+  color: white;
+  box-shadow: var(--neu-shadow-small);
+}
+
+/* --------------------------------------------- */
+/* FORMULAIRES                                   */
+/* --------------------------------------------- */
+
+.auth-form {
+  display: block;
+}
+
+.auth-form.hidden {
+  display: none;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+  width: 100%;
+}
+
+.form-group.half {
+  width: 50%;
+}
+
+.input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon i {
+  position: absolute;
+  left: 1.2rem;
+  color: var(--text-light);
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.input-icon input {
+  width: 100%;
+  padding: 0.9rem 1rem 0.9rem 3rem;
+  border: none;
+  background: var(--bg-soft);
+  border-radius: 50px;
+  box-shadow: var(--neu-shadow-inset-small);
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  transition: all 0.2s;
+}
+
+.input-icon input::placeholder {
+  color: var(--text-light);
+  font-weight: 300;
+}
+
+.input-icon input:focus {
+  outline: none;
+  box-shadow: var(--neu-shadow-inset);
+}
+
+/* --------------------------------------------- */
+/* OPTIONS FORMULAIRE                            */
+/* --------------------------------------------- */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-pink);
+}
+
+.forgot-link {
+  color: var(--primary-pink);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.forgot-link:hover {
+  color: var(--primary-blue);
+}
+
+/* --------------------------------------------- */
+/* BOUTON SUBMIT NÉOMORPHIQUE                    */
+/* --------------------------------------------- */
+
+.btn-submit {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background: var(--gradient-main);
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 4px 4px 12px #d1d9e6, -4px -4px 12px #ffffff;
+  margin-bottom: 1rem;
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 14px #d1d9e6, -6px -6px 14px #ffffff;
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+  box-shadow: var(--neu-shadow-inset);
+}
+
+/* --------------------------------------------- */
+/* MESSAGES D'ERREUR                             */
+/* --------------------------------------------- */
+
+.error-message {
+  color: var(--primary-pink);
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  padding-left: 1rem;
+}
+
+/* --------------------------------------------- */
+/* MODALE RÉINITIALISATION NÉOMORPHIQUE          */
+/* --------------------------------------------- */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(238, 240, 245, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--bg-soft);
+  border-radius: 50px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--neu-shadow-strong);
+  border: var(--border-neu);
+}
+
+.modal-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.modal-content p {
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-modal {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-soft);
+  box-shadow: var(--neu-shadow-small);
+  color: var(--text-dark);
+}
+
+.btn-cancel:hover {
+  box-shadow: var(--neu-shadow-inset-small);
+}
+
+.btn-send {
+  background: var(--gradient-main);
+  color: white;
+  box-shadow: 4px 4px 12px #d1d9e6, -4px -4px 12px #ffffff;
+}
+
+.btn-send:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 14px #d1d9e6, -6px -6px 14px #ffffff;
+}
+
+/* --------------------------------------------- */
+/* RESPONSIVE                                    */
+/* --------------------------------------------- */
+
+@media (max-width: 600px) {
+  body {
+    padding: 60px 15px 20px 15px;
+  }
+
+  .header {
+    height: 65px;
+    padding: 0 1rem;
+  }
+
+  .logo-circle {
+    width: 42px;
+    height: 42px;
+  }
+
+  .site-name-3d {
+    font-size: 1.1rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-group.half {
+    width: 100%;
+  }
+
+  .form-options {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .modal-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .auth-tabs {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .tab-btn {
+    padding: 0.6rem;
+  }
+}
