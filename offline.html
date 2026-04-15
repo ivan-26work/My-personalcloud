@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hors ligne - MEGANE_PICTURE</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .offline-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-align: center;
+      max-width: 320px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .offline-card i {
+      font-size: 64px;
+      color: #0ea5e9;
+      margin-bottom: 20px;
+    }
+    .offline-card h1 {
+      font-size: 24px;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+    .offline-card p {
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .retry-btn {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      border: none;
+      padding: 14px 24px;
+      border-radius: 40px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .retry-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <i class="fas fa-wifi"></i>
+    <h1>Hors ligne</h1>
+    <p>Vous n'êtes pas connecté à Internet.<br>Veuillez vérifier votre connexion.</p>
+    <button class="retry-btn" onclick="location.reload()">
+      <i class="fas fa-sync-alt"></i> Réessayer
+    </button>
+  </div>
+</body>
+</html>

@@ -2,232 +2,314 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Mégane Cloud • coffre-fort numérique</title>
-  
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  
-  <!-- Styles CSS -->
-  <link rel="stylesheet" href="css/index.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>MEGANE_PICTURE — Galerie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icone.png">
+  <meta name="theme-color" content="#0ea5e9">
 </head>
 <body>
-  <!-- LOADER INITIAL (centré) -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-card">
-      <div class="loading-title">MÉGANE CLOUD</div>
-      <div class="loading-spinner"></div>
+
+<!-- ===== HEADER ===== -->
+<header class="header" id="mainHeader">
+  <button class="icon-btn" id="hamburgerBtn" aria-label="Menu">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <div class="header-center" id="siteName">MEGANE_PICTURE</div>
+
+  <div class="grid-controls">
+    <div class="photo-count" id="photoCount">📷 0 photo</div>
+    <div class="slider-container">
+      <label for="sizeSlider"><i class="fas fa-images"></i></label>
+      <input type="range" id="sizeSlider" min="80" max="200" value="120" step="10">
+      <span class="slider-value" id="sizeValue">120px</span>
     </div>
   </div>
 
-  <!-- SYNC LOADER (centré milieu) -->
-  <div class="sync-loader hidden" id="syncLoader">
-    <div class="sync-loader-content">
-      <i class="fas fa-circle-notch fa-spin"></i>
-      <span class="sync-text">SYNC</span>
-      <span class="sync-count">0/0</span>
-      <span class="sync-size">0/0 Mo</span>
-      <span class="sync-time"></span>
+  <div class="logo-icon" id="logoBtn" aria-label="Rafraîchir">
+    <img src="images/logo.png" alt="MEGANE_PICTURE" class="logo-img">
+  </div>
+</header>
+
+<!-- ===== ZONE DOSSIERS (scroll horizontal) ===== -->
+<div class="folders-container">
+  <div class="folders-scroll" id="foldersScroll"></div>
+</div>
+
+<!-- ===== GALERIE ===== -->
+<main class="gallery-frame">
+  <div class="gallery" id="gallery">
+    <div class="loading-placeholder">
+      <i class="fas fa-spinner fa-pulse"></i>
+      <p>Chargement…</p>
     </div>
   </div>
+</main>
 
-  <!-- DELETE LOADER -->
-  <div class="delete-loader hidden" id="deleteLoader">
-    <div class="delete-loader-backdrop"></div>
-    <div class="delete-loader-content">
-      <i class="fas fa-circle-notch fa-spin"></i>
-      <div class="delete-loader-text">Suppression en cours...</div>
-    </div>
-  </div>
-
-  <!-- HEADER (commun aux deux modes) -->
-  <header class="header">
-    <a href="index.html" class="logo-circle" aria-label="Mégane Cloud">
-      <img src="assets/logo.png" alt="Logo MC" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'45\' fill=\'url(%23g)\'/%3E%3Cdefs%3E%3ClinearGradient id=\'g\' x1=\'0%25\' y1=\'0%25\' x2=\'100%25\' y2=\'100%25\'%3E%3Cstop offset=\'0%25\' stop-color=\'%234a90e2\'/%3E%3Cstop offset=\'100%25\' stop-color=\'%23ff7e9f\'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x=\'50\' y=\'70\' font-size=\'50\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial\'%3EMC%3C/text%3E%3C/svg%3E';">
-    </a>
-
-    <span class="site-name-3d">MÉGANE</span>
-
-    <!-- Barre de recherche (visible uniquement en mode connecté) -->
-    <div class="search-container" id="searchContainer">
-      <input type="text" class="search-input" id="searchInput" placeholder="Rechercher...">
-    </div>
-
-    <!-- Menu contextuel header (caché par défaut) -->
-    <div class="context-menu-header hidden" id="headerContextMenu">
-      <div class="context-menu-header-content">
-        <!-- Options injectées par JS -->
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-container">
+    <!-- Barre de recherche (visible par défaut) -->
+    <div class="search-bar" id="searchBar">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Rechercher par nom...">
       </div>
     </div>
 
-    <!-- Barre multi-sélection (cachée par défaut) -->
-    <div class="multi-select-actions hidden" id="multiSelectActions">
-      <span class="select-count" id="selectCount">0 sélectionné</span>
-      <div class="select-buttons">
-        <button class="action-btn" id="copySelectedBtn" title="Copier">
-          <i class="fas fa-copy"></i>
-        </button>
-        <button class="action-btn" id="downloadSelectedBtn" title="Télécharger la sélection">
-          <i class="fas fa-download"></i>
-        </button>
-        <button class="action-btn" id="deleteSelectedBtn" title="Supprimer la sélection">
-          <i class="fas fa-trash"></i>
-        </button>
-        <button class="action-btn" id="cancelSelectBtn" title="Annuler">
-          <i class="fas fa-times"></i>
-        </button>
+    <!-- Barre d'action (cachée par défaut) -->
+    <div class="action-bar" id="actionBar">
+      <button class="action-btn" id="renameActionBtn" aria-label="Renommer">
+        <i class="fas fa-pen"></i>
+      </button>
+      <button class="action-btn" id="deleteActionBtn" aria-label="Supprimer">
+        <i class="fas fa-trash"></i>
+      </button>
+      <button class="action-btn" id="downloadActionBtn" aria-label="Télécharger">
+        <i class="fas fa-download"></i>
+      </button>
+      <button class="action-btn" id="infoActionBtn" aria-label="Informations">
+        <i class="fas fa-info-circle"></i>
+      </button>
+      <button class="action-btn" id="moveActionBtn" aria-label="Déplacer">
+        <i class="fas fa-arrows-alt"></i>
+      </button>
+      <button class="action-btn" id="copyActionBtn" aria-label="Copier">
+        <i class="fas fa-copy"></i>
+      </button>
+      <button class="action-btn danger" id="closeActionBtn" aria-label="Désélectionner">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Boutons fixes -->
+    <div class="footer-buttons">
+      <button class="footer-btn folder-btn" id="createFolderBtn" aria-label="Créer un dossier">
+        <i class="fas fa-folder-plus"></i>
+      </button>
+      <button class="upload-btn" id="uploadBtn" aria-label="Ajouter des photos">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar" role="dialog" aria-label="Menu">
+  <div class="sidebar-handle"></div>
+  <div class="sidebar-buttons">
+    <button class="sidebar-btn btn-profile" id="profileBtn">
+      <div class="sidebar-btn-icon"><i class="fas fa-user"></i></div>
+      <span>Profil</span>
+    </button>
+    <button class="sidebar-btn btn-theme" id="themeBtn">
+      <div class="sidebar-btn-icon"><i class="fas fa-moon"></i></div>
+      <span>Thème</span>
+    </button>
+    <button class="sidebar-btn btn-info" id="infoBtn">
+      <div class="sidebar-btn-icon"><i class="fas fa-info-circle"></i></div>
+      <span>Info</span>
+    </button>
+    <button class="sidebar-btn btn-close-sidebar" id="closeSidebarBtn">
+      <div class="sidebar-btn-icon"><i class="fas fa-times"></i></div>
+      <span>Fermer</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===== MODAL PROFIL ===== -->
+<div class="modal-overlay" id="profilModalOverlay">
+  <div class="modal-bottom" id="profilModal" role="dialog" aria-label="Mon profil">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-user"></i> Mon profil</h3>
+      <button class="modal-close" id="closeProfilModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="profile-field">
+      <label>Adresse e-mail</label>
+      <input type="email" id="profileEmail" readonly>
+    </div>
+    <div class="profile-field">
+      <label>Mot de passe</label>
+      <div class="password-wrapper">
+        <input type="password" id="profilePassword" value="••••••••" readonly>
+        <button class="toggle-password" id="togglePasswordBtn"><i class="fas fa-eye"></i></button>
       </div>
     </div>
+    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+  </div>
+</div>
 
-    <!-- Boutons d'authentification (visibles uniquement en mode invité) -->
-    <div class="auth-buttons" id="authButtons">
-      <a href="auth.html?mode=login" class="btn-auth btn-auth-login">Connexion</a>
-      <a href="auth.html?mode=signup" class="btn-auth btn-auth-signup">Inscription</a>
+<!-- ===== MODAL CONFIRMATION DÉCONNEXION ===== -->
+<div class="modal-overlay" id="confirmLogoutOverlay">
+  <div class="modal-bottom" id="confirmLogoutModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-sign-out-alt"></i> Déconnexion</h3>
+      <button class="modal-close" id="closeConfirmLogout"><i class="fas fa-times"></i></button>
     </div>
-
-    <!-- Bouton paramètres (visible uniquement en mode connecté) -->
-    <a href="para.html" class="settings-btn" id="settingsBtn" aria-label="Paramètres">
-      <i class="fas fa-cog"></i>
-    </a>
-  </header>
-
-  <!-- STATS SCROLLABLES (visibles uniquement en mode connecté) -->
-  <div class="stats-scroll-container" id="statsContainer">
-    <div class="stats-flex-row" id="statsRow">
-      <!-- Les stats seront injectées par JS -->
+    <p>Voulez-vous vraiment vous déconnecter ?</p>
+    <div class="modal-actions">
+      <button class="btn-secondary-modal" id="cancelLogoutBtn">Annuler</button>
+      <button class="btn-danger-modal" id="confirmLogoutBtn">Déconnecter</button>
     </div>
   </div>
+</div>
 
-  <!-- BARRE FICHIERS RÉCENTS (visibles uniquement en mode connecté) -->
-  <div class="recent-files-bar" id="recentFilesBar">
-    <span class="recent-files-title">Fichiers récents</span>
-  </div>
-
-  <!-- CONTENU PRINCIPAL - Sera remplacé par JS selon le mode -->
-  <main class="main-content" id="mainContent">
-    <!-- Le contenu sera injecté par JS (mode connecté ou invité) -->
-  </main>
-
-  <!-- BOUTONS FLOTTANTS (visibles uniquement en mode connecté) -->
-  <div class="fab-rectangle" id="fabContainer">
-    <div class="fab fab-upload" id="uploadBtn" title="Uploader des fichiers">
-      <i class="fas fa-plus"></i>
+<!-- ===== MODAL RENOMMER ===== -->
+<div class="modal-overlay" id="renameModalOverlay">
+  <div class="modal-bottom" id="renameModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-pen"></i> Renommer</h3>
+      <button class="modal-close" id="closeRenameModal"><i class="fas fa-times"></i></button>
     </div>
-    <a href="gestion.html" class="fab fab-gestion" title="Gestionnaire de fichiers">
-      <i class="fas fa-folder-open"></i>
-    </a>
+    <input type="text" id="renameInput" placeholder="Nouveau nom">
+    <div class="modal-actions">
+      <button class="btn-secondary-modal" id="cancelRenameBtn">Annuler</button>
+      <button class="btn-primary-modal" id="confirmRenameBtn">Renommer</button>
+    </div>
   </div>
+</div>
 
-  <!-- OVERLAY DE VISUALISATION -->
-  <div class="file-overlay hidden" id="fileOverlay">
-    <div class="overlay-backdrop" id="overlayBackdrop"></div>
-    <div class="overlay-container">
-      <div class="overlay-header">
-        <span class="overlay-filename" id="overlayFilename"></span>
+<!-- ===== MODAL SUPPRESSION ===== -->
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal-bottom" id="deleteModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-trash-alt"></i> Supprimer</h3>
+      <button class="modal-close" id="closeDeleteModal"><i class="fas fa-times"></i></button>
+    </div>
+    <p>Supprimer <span class="count" id="deleteCount">0</span> photo(s) ? Cette action est irréversible.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary-modal" id="cancelDeleteBtn">Annuler</button>
+      <button class="btn-danger-modal" id="confirmDeleteBtn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL UPLOAD ===== -->
+<div class="modal-overlay" id="uploadModalOverlay">
+  <div class="modal-bottom upload-modal" id="uploadModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-cloud-upload-alt"></i> Envoi en cours</h3>
+      <button class="modal-close" id="closeUploadModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="upload-list" id="uploadList"></div>
+    <div class="upload-progress-section">
+      <div class="progress-stats">
+        <span id="progressCount">0/0</span>
+        <span id="progressPercent">0%</span>
       </div>
-      <div class="overlay-content" id="overlayContent"></div>
-      <div class="overlay-footer">
-        <div class="overlay-metadata" id="overlayMetadata"></div>
-        <div class="overlay-actions">
-          <button class="overlay-action-btn" id="overlayDownload" title="Télécharger">
-            <i class="fas fa-download"></i>
-          </button>
-          <button class="overlay-action-btn" id="overlayFavorite" title="Ajouter aux favoris">
-            <i class="fas fa-star"></i>
-          </button>
-          <button class="overlay-action-btn" id="overlayShare" title="Partager">
-            <i class="fas fa-share-alt"></i>
-          </button>
-          <button class="overlay-action-btn" id="overlayDelete" title="Supprimer">
-            <i class="fas fa-trash"></i>
-          </button>
-          <button class="overlay-action-btn" id="overlayFullscreen" title="Ouvrir en plein écran">
-            <i class="fas fa-expand"></i>
-          </button>
-          <button class="overlay-action-btn" id="overlayClose" title="Fermer">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
+      <button class="cancel-upload" id="cancelUploadBtn"><i class="fas fa-ban"></i> Annuler</button>
     </div>
   </div>
+</div>
 
-  <!-- Script JavaScript -->
-  <script src="js/app.js"></script>
-  <script src="js/securite.js"></script>
-  <script src="js/index.js"></script>
-  
-  <!-- Patch pour presse-papiers (si nécessaire) -->
-  <script>
-    (function() {
-      console.log('🔧 Patch: Récupération fichiers sélectionnés');
-      
-      function getSelectedFileIds() {
-        return Array.from(document.querySelectorAll('.file-item.selected'))
-          .map(item => item.dataset.id)
-          .filter(id => id);
-      }
-      
-      function getFileById(fileId) {
-        const item = document.querySelector(`.file-item[data-id="${fileId}"]`);
-        if (item?.dataset.file) {
-          try {
-            return JSON.parse(item.dataset.file.replace(/&apos;/g, "'"));
-          } catch (e) {}
-        }
-        return null;
-      }
-      
-      window.handleCopySelected = async function() {
-        const selectedIds = getSelectedFileIds();
-        if (selectedIds.length === 0) {
-          alert('Aucun fichier sélectionné');
-          return;
-        }
-        
-        const file = getFileById(selectedIds[0]);
-        if (!file) {
-          alert('Fichier introuvable');
-          return;
-        }
-        
-        if (!window.supabase) {
-          alert('Supabase non disponible');
-          return;
-        }
-        
-        try {
-          const { data: { user } } = await window.supabase.auth.getUser();
-          
-          if (!user) {
-            alert('Vous devez être connecté');
-            return;
-          }
-          
-          await window.supabase
-            .from('presse_papiers')
-            .delete()
-            .eq('user_id', user.id);
-          
-          await window.supabase
-            .from('presse_papiers')
-            .insert({ user_id: user.id, fichier_id: file.id });
-          
-          alert(`✅ Fichier copié : ${file.nom}`);
-          
-        } catch (error) {
-          console.error('Erreur copie:', error);
-          alert('❌ Erreur lors de la copie');
-        }
-      };
-      
-      const btn = document.getElementById('copySelectedBtn');
-      if (btn) {
-        btn.addEventListener('click', window.handleCopySelected);
-      }
-    })();
-  </script>
+<!-- ===== MODAL CRÉATION DOSSIER ===== -->
+<div class="modal-overlay" id="createFolderOverlay">
+  <div class="modal-bottom" id="createFolderModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-folder-plus"></i> Nouveau dossier</h3>
+      <button class="modal-close" id="closeCreateFolder"><i class="fas fa-times"></i></button>
+    </div>
+    <input type="text" id="folderNameInput" placeholder="Nom du dossier">
+    <div class="modal-actions">
+      <button class="btn-secondary-modal" id="cancelFolderBtn">Annuler</button>
+      <button class="btn-primary-modal" id="confirmFolderBtn">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL SÉLECTION DOSSIER (déplacer/copier) ===== -->
+<div class="modal-overlay" id="selectFolderOverlay">
+  <div class="modal-bottom" id="selectFolderModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-folder-open"></i> Choisir un dossier</h3>
+      <button class="modal-close" id="closeSelectFolder"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="folder-list" id="folderList"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary-modal" id="cancelSelectFolderBtn">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PROGRESSION (déplacer/copier) ===== -->
+<div class="modal-overlay" id="progressOverlay">
+  <div class="modal-bottom" id="progressModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 id="progressTitle"><i class="fas fa-arrows-alt"></i> Déplacement</h3>
+      <button class="modal-close" id="closeProgressModal"><i class="fas fa-times"></i></button>
+    </div>
+    <p id="progressMessage">Déplacement de 0 photos...</p>
+    <div class="progress-stats">
+      <span id="actionProgressCount">0/0</span>
+      <span id="actionProgressPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="actionProgressFill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL INFO PHOTO ===== -->
+<div class="modal-overlay" id="infoModalOverlay">
+  <div class="modal-bottom" id="infoModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3><i class="fas fa-info-circle"></i> Informations</h3>
+      <button class="modal-close" id="closeInfoModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="info-preview" id="infoPreview"></div>
+    <div class="info-details" id="infoDetails">
+      <div class="info-row"><span class="info-label">Nom :</span><span id="infoName">-</span></div>
+      <div class="info-row"><span class="info-label">Date :</span><span id="infoDate">-</span></div>
+      <div class="info-row"><span class="info-label">Taille :</span><span id="infoSize">-</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DOSSIER ACTIONS (appui long sur dossier) ===== -->
+<div class="modal-overlay" id="folderActionsOverlay">
+  <div class="modal-bottom" id="folderActionsModal" role="dialog">
+    <div class="modal-handle"></div>
+    <div class="folder-actions">
+      <button class="folder-action-btn" id="folderRenameBtn"><i class="fas fa-pen"></i> Renommer</button>
+      <button class="folder-action-btn" id="folderDeleteBtn"><i class="fas fa-trash"></i> Supprimer</button>
+      <button class="folder-action-btn" id="folderDownloadBtn"><i class="fas fa-download"></i> Télécharger</button>
+      <button class="folder-action-btn cancel" id="folderCancelBtn"><i class="fas fa-times"></i> Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VIEWER PLEIN ÉCRAN ===== -->
+<div class="viewer-overlay" id="viewerOverlay" role="dialog" aria-label="Visualiseur photo">
+  <button class="viewer-close" id="viewerClose"><i class="fas fa-times"></i></button>
+  <div class="viewer-container" id="viewerContainer">
+    <img class="viewer-img" id="viewerImg" src="" alt="Photo en plein écran">
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="js/app.js"></script>
+
 </body>
 </html>

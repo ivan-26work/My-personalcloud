@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MEGANE_PICTURE — Connexion</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/login.css"/>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Logo -->
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="11" fill="#0ea5e9"/>
+        <ellipse cx="10" cy="13" rx="2.5" ry="3" fill="white"/>
+        <ellipse cx="18" cy="13" rx="2.5" ry="3" fill="white"/>
+        <path d="M10 18.5 Q14 21 18 18.5" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">MEGANE_PICTURE</div>
+      <div class="logo-badge">CLOUD</div>
+    </div>
+  </div>
+
+  <!-- Flip Scene -->
+  <div class="flip-scene">
+    <div class="flip-card" id="flipCard">
+
+      <!-- FACE AVANT : CONNEXION -->
+      <div class="face face-front" id="face-login">
+        <div class="face-header">
+          <div class="face-title">Bon retour 👋</div>
+          <div class="face-sub">Connectez-vous à votre galerie</div>
+        </div>
+
+        <div class="fields">
+          <div class="field">
+            <label>Adresse e-mail</label>
+            <div class="input-wrap">
+              <input type="email" id="l-email" placeholder="vous@email.com" autocomplete="email"/>
+            </div>
+            <span class="field-msg" id="l-email-msg"></span>
+          </div>
+
+          <div class="field">
+            <label>Mot de passe</label>
+            <div class="input-wrap">
+              <input type="password" id="l-pw" placeholder="••••••••" autocomplete="current-password"/>
+              <button class="toggle-eye" type="button" data-target="l-pw">
+                <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="field-msg" id="l-pw-msg"></span>
+          </div>
+
+          <div class="forgot-row">
+            <button type="button" class="forgot-link" id="btn-forgot">Mot de passe oublié ?</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-login">
+          <span class="btn-text">Se connecter</span>
+          <span class="spinner"></span>
+        </button>
+
+        <div class="alert" id="l-alert"></div>
+
+        <div class="switch-row">
+          Pas encore de compte ?
+          <button type="button" class="switch-btn" id="btn-go-register">S'inscrire</button>
+        </div>
+      </div>
+
+      <!-- FACE ARRIÈRE : INSCRIPTION -->
+      <div class="face face-back" id="face-register">
+        <div class="face-header">
+          <div class="face-title">Créer un compte 🚀</div>
+          <div class="face-sub">Rejoignez MEGANE_PICTURE</div>
+        </div>
+
+        <div class="fields">
+          <div class="field">
+            <label>Adresse e-mail</label>
+            <div class="input-wrap">
+              <input type="email" id="r-email" placeholder="vous@email.com" autocomplete="email"/>
+            </div>
+            <span class="field-msg" id="r-email-msg"></span>
+          </div>
+
+          <div class="field">
+            <label>Mot de passe</label>
+            <div class="input-wrap">
+              <input type="password" id="r-pw" placeholder="••••••••" autocomplete="new-password"/>
+              <button class="toggle-eye" type="button" data-target="r-pw">
+                <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <div class="pw-strength">
+              <div class="strength-track"><div class="strength-fill" id="s-fill"></div></div>
+              <span class="strength-text" id="s-label"></span>
+            </div>
+            <span class="field-msg" id="r-pw-msg"></span>
+          </div>
+
+          <div class="field">
+            <label>Confirmer le mot de passe</label>
+            <div class="input-wrap">
+              <input type="password" id="r-confirm" placeholder="••••••••" autocomplete="new-password"/>
+              <span class="match-badge" id="match-icon"></span>
+            </div>
+            <span class="field-msg" id="r-confirm-msg"></span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-register">
+          <span class="btn-text">Créer mon compte</span>
+          <span class="spinner"></span>
+        </button>
+
+        <div class="alert" id="r-alert"></div>
+
+        <div class="switch-row">
+          Déjà un compte ?
+          <button type="button" class="switch-btn" id="btn-go-login">Se connecter</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL MOT DE PASSE OUBLIÉ -->
+  <div class="modal-overlay" id="modal-forgot">
+    <div class="modal">
+      <button class="modal-close" id="btn-close-modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+          <circle cx="12" cy="16" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <div class="modal-title">Mot de passe oublié</div>
+      <div class="modal-sub">Entrez votre e-mail. Nous vous enverrons un lien de réinitialisation.</div>
+
+      <div class="field" style="margin-top:20px">
+        <label>Adresse e-mail</label>
+        <div class="input-wrap">
+          <input type="email" id="forgot-email" placeholder="vous@email.com"/>
+        </div>
+        <span class="field-msg" id="forgot-email-msg"></span>
+      </div>
+
+      <button class="btn btn-primary" id="btn-send-reset" style="margin-top:16px">
+        <span class="btn-text">Envoyer le lien</span>
+        <span class="spinner"></span>
+      </button>
+
+      <div class="alert" id="forgot-alert"></div>
+    </div>
+  </div>
+
+  <div class="footer">MEGANE_PICTURE · Stockage cloud © 2025</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/login.js"></script>
+</body>
+</html>
