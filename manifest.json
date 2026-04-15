@@ -1,29 +1,46 @@
 {
-  "name": "powered by megane",
+  "name": "powered by megane ",
   "short_name": "mysteuf",
   "description": "Galerie photo personnelle avec stockage cloud Supabase",
-  "start_url": "/",
+  "start_url": "/mysteuf/",
+  "scope": "/mysteuf/",
   "display": "standalone",
   "theme_color": "#0ea5e9",
   "background_color": "#0ea5e9",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "images/icon.png",
+      "src": "/mysteuf/images/icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "images/icon.png",
+      "src": "/mysteuf/images/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "images/logo.png",
-      "sizes": "64x64",
+      "src": "/mysteuf/images/logo.png",
+      "sizes": "192x192",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Galerie",
+      "short_name": "Photos",
+      "description": "Voir toutes les photos",
+      "url": "/mysteuf/",
+      "icons": [{ "src": "/mysteuf/images/logo.png", "sizes": "64x64" }]
+    },
+    {
+      "name": "Upload",
+      "short_name": "Ajouter",
+      "description": "Ajouter des photos",
+      "url": "/mysteuf/?upload",
+      "icons": [{ "src": "/mysteuf/images/logo.png", "sizes": "64x64" }]
     }
   ],
   "categories": ["photography", "storage", "utility"],
