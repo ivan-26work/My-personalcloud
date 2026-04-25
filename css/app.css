@@ -1552,3 +1552,84 @@ input, textarea {
     -webkit-user-select: none;
     user-select: none;
 }
+/* ===== OPTIMISATIONS SCROLL ULTRA RAPIDE ===== */
+
+/* Forcer l'accélération GPU sur TOUS les éléments mobiles */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-frame,
+.date-photos,
+.photo-card,
+.folders-scroll,
+.folder-card {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Supprimer TOUTES les ombres (lourdes en WebView) */
+.photo-card,
+.folder-card,
+.header,
+.footer-container,
+.folders-container,
+.gallery-frame,
+.modal-bottom,
+.sidebar {
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+
+/* Désactiver toutes les transitions */
+.photo-card,
+.folder-card,
+.icon-btn,
+.logo-icon,
+.footer-btn,
+.upload-btn,
+.action-btn {
+    transition: none !important;
+    -webkit-transition: none !important;
+}
+
+.photo-card:active,
+.folder-card:active {
+    transform: scale(0.98);
+}
+
+/* Scroll fluide */
+.gallery-frame {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.folders-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Images optimisées */
+.photo-img {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: auto;
+}
+
+/* Désactiver les animations de chargement */
+.loading-placeholder i {
+    animation: none !important;
+}
+
+/* Réduire la qualité visuelle pour la fluidité (optionnel) */
+.photo-card {
+    border-radius: 8px;
+}
+
+.photo-frame {
+    border-radius: 6px;
+}
