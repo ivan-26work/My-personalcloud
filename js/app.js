@@ -239,69 +239,7 @@ function lazyLoadImages() {
     }
 }
 
-// ===== RENDU GALERIE OPTIMISÉ =====
-function renderGallery() {
-    const cardSize = parseInt(sizeSlider.value);
-    sizeValue.textContent = cardSize + 'px';
-    document.documentElement.style.setProperty('--card-size', cardSize + 'px');
-    
-    if (photos.length === 0) {
-        gallery.innerHTML = `<div class="loading-placeholder"><i class="fas fa-cloud-upload-alt"></i><p>Aucune photo</p><p class="sub">Appuyez sur + pour ajouter</p></div>`;
-        photoCountSpan.textContent = '📷 0 photo';
-        return;
-    }
-    
-    const fragment = document.createDocumentFragment();
-    const grouped = groupPhotosByDate(photos);
-    
-    for (const [dateLabel, groupPhotos] of Object.entries(grouped)) {
-        const section = document.createElement('div');
-        section.className = 'date-section';
-        
-        const header = document.createElement('div');
-        header.className = 'date-header';
-        header.textContent = dateLabel;
-        section.appendChild(header);
-        
-        const photosContainer = document.createElement('div');
-        photosContainer.className = 'date-photos';
-        
-        for (let i = 0; i < groupPhotos.length; i++) {
-            const photo = groupPhotos[i];
-            const isSelected = selectedPhotos.has(photo.id);
-            const shortName = photo.name.length > 20 ? photo.name.substring(0, 17) + '…' : photo.name;
-            
-            const card = document.createElement('div');
-            card.className = `photo-card ${multiSelectMode ? 'multi-select-mode' : ''} ${isSelected ? 'selected' : ''}`;
-            card.dataset.id = photo.id;
-            card.dataset.name = photo.name;
-            card.dataset.url = photo.url;
-            
-            card.innerHTML = `
-                <div class="photo-checkbox">
-                    <input type="checkbox" class="photo-check" ${isSelected ? 'checked' : ''}>
-                </div>
-                <div class="photo-frame">
-                    <img class="photo-img" data-src="${photo.url}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="${escapeHtml(photo.name)}">
-                </div>
-                <div class="photo-name">${escapeHtml(shortName)}</div>
-            `;
-            
-            photosContainer.appendChild(card);
-        }
-        
-        section.appendChild(photosContainer);
-        fragment.appendChild(section);
-    }
-    
-    gallery.innerHTML = '';
-    gallery.appendChild(fragment);
-    lazyLoadImages();
-    
-    photoCountSpan.textContent = `📷 ${photos.length} photo${photos.length > 1 ? 's' : ''}`;
-    attachCardEventsOptimized();
-}
-
+// ===== GROUPER LES PHOTOS PAR DATE =====
 function groupPhotosByDate(photosArray) {
     const groups = {};
     const now = new Date();
@@ -329,6 +267,90 @@ function groupPhotosByDate(photosArray) {
     }
     
     return groups;
+}
+// ===== RENDU GALERIE OPTIMISÉ =====
+// ===== RENDU GALERIE ULTRA RAPIDE =====
+function renderGallery() {
+    const cardSize = parseInt(sizeSlider.value);
+    sizeValue.textContent = cardSize + 'px';
+    document.documentElement.style.setProperty('--card-size', cardSize + 'px');
+    
+    if (photos.length === 0) {
+        gallery.innerHTML = `<div class="loading-placeholder"><i class="fas fa-cloud-upload-alt"></i><p>Aucune photo</p><p class="sub">Appuyez sur + pour ajouter</p></div>`;
+        photoCountSpan.textContent = '📷 0 photo';
+        return;
+    }
+    
+    // Utiliser requestAnimationFrame pour fluidité
+    requestAnimationFrame(() => {
+        const fragment = document.createDocumentFragment();
+        const grouped = groupPhotosByDate(photos);
+        
+        for (const [dateLabel, groupPhotos] of Object.entries(grouped)) {
+            const section = document.createElement('div');
+            section.className = 'date-section';
+            
+            const header = document.createElement('div');
+            header.className = 'date-header';
+            header.textContent = dateLabel;
+            section.appendChild(header);
+            
+            const photosContainer = document.createElement('div');
+            photosContainer.className = 'date-photos';
+            
+            // Boucle optimisée
+            for (let i = 0; i < groupPhotos.length; i++) {
+                const photo = groupPhotos[i];
+                const isSelected = selectedPhotos.has(photo.id);
+                const shortName = photo.name.length > 20 ? photo.name.substring(0, 17) + '…' : photo.name;
+                
+                const card = document.createElement('div');
+                card.className = `photo-card ${multiSelectMode ? 'multi-select-mode' : ''} ${isSelected ? 'selected' : ''}`;
+                card.dataset.id = photo.id;
+                card.dataset.name = photo.name;
+                card.dataset.url = photo.url;
+                
+                // Décoder l'image en arrière-plan
+                const img = document.createElement('img');
+                img.className = 'photo-img';
+                img.alt = escapeHtml(photo.name);
+                img.loading = 'lazy';
+                img.decode = 'async';
+                
+                // Source différée
+                setTimeout(() => {
+                    img.src = photo.url;
+                }, 0);
+                
+                const frame = document.createElement('div');
+                frame.className = 'photo-frame';
+                frame.appendChild(img);
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'photo-name';
+                nameDiv.textContent = shortName;
+                
+                const checkbox = document.createElement('div');
+                checkbox.className = 'photo-checkbox';
+                checkbox.innerHTML = `<input type="checkbox" class="photo-check" ${isSelected ? 'checked' : ''}>`;
+                
+                card.appendChild(checkbox);
+                card.appendChild(frame);
+                card.appendChild(nameDiv);
+                
+                photosContainer.appendChild(card);
+            }
+            
+            section.appendChild(photosContainer);
+            fragment.appendChild(section);
+        }
+        
+        gallery.innerHTML = '';
+        gallery.appendChild(fragment);
+        
+        photoCountSpan.textContent = `📷 ${photos.length} photo${photos.length > 1 ? 's' : ''}`;
+        attachCardEventsOptimized();
+    });
 }
 
 // ===== VERSION OPTIMISÉE AVEC DIFFÉRENCIATION SCROLL/CLIC =====
