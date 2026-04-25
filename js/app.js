@@ -1,6 +1,6 @@
 // =============================================
 // MEGANE_PICTURE — app.js
-// Version finale avec toutes les corrections
+// VERSION OPTIMISÉE POUR WEBVIEW ANDROID
 // =============================================
 
 // ===== SUPABASE CONFIG =====
@@ -8,12 +8,17 @@ const SUPABASE_URL = 'https://fuulsbckqjzedtbimqaq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1dWxzYmNrcWp6ZWR0YmltcWFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzA0NTgsImV4cCI6MjA5MTc0NjQ1OH0.g0vlcB0pdQZjmw6ax69dBCE40HlSCjBjT2QXzutYuPk';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// ===== DÉTECTION ANDROID =====
+const isAndroid = /android/i.test(navigator.userAgent);
+if (isAndroid) {
+    document.body.classList.add('android-optimized');
+}
+
 // ===== ÉTAT GLOBAL =====
 let photos = [];
 let folders = [];
 let selectedPhotos = new Set();
 let multiSelectMode = false;
-let pressTimer = null;
 let currentUser = null;
 let currentFolderId = null;
 let searchQuery = '';
@@ -37,7 +42,44 @@ const searchInput = document.getElementById('searchInput');
 const foldersScroll = document.getElementById('foldersScroll');
 const mainHeader = document.getElementById('mainHeader');
 
-// ===== NOTIFICATION HEADER (uniquement couleur) =====
+// ===== STOCKAGE LOCAL =====
+const STORAGE_KEY = 'megane_photos_cache';
+const FOLDERS_KEY = 'megane_folders_cache';
+
+function savePhotosToLocalStorage() {
+    if (!currentUser) return;
+    const cache = {
+        userId: currentUser.id,
+        photos: photos,
+        timestamp: Date.now()
+    };
+    localStorage.setItem(`${STORAGE_KEY}_${currentUser.id}`, JSON.stringify(cache));
+}
+
+function loadPhotosFromLocalStorage() {
+    if (!currentUser) return null;
+    const cached = localStorage.getItem(`${STORAGE_KEY}_${currentUser.id}`);
+    if (cached) {
+        const data = JSON.parse(cached);
+        if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+            return data.photos;
+        }
+    }
+    return null;
+}
+
+function saveFoldersToLocalStorage() {
+    if (!currentUser) return;
+    localStorage.setItem(`${FOLDERS_KEY}_${currentUser.id}`, JSON.stringify(folders));
+}
+
+function loadFoldersFromLocalStorage() {
+    if (!currentUser) return null;
+    const cached = localStorage.getItem(`${FOLDERS_KEY}_${currentUser.id}`);
+    return cached ? JSON.parse(cached) : null;
+}
+
+// ===== NOTIFICATION HEADER =====
 function notifyHeader(success) {
     mainHeader.classList.add(success ? 'success' : 'error');
     setTimeout(() => {
@@ -62,19 +104,23 @@ async function checkSession() {
 async function loadFolders() {
     if (!currentUser) return;
     
+    const cachedFolders = loadFoldersFromLocalStorage();
+    if (cachedFolders) {
+        folders = cachedFolders;
+        renderFolders();
+    }
+    
     const { data, error } = await sb
         .from('folders')
         .select('*')
         .eq('user_id', currentUser.id)
         .order('name', { ascending: true });
     
-    if (error) {
-        console.error('Erreur chargement dossiers:', error);
-        return;
+    if (!error && data) {
+        folders = data;
+        renderFolders();
+        saveFoldersToLocalStorage();
     }
-    
-    folders = data || [];
-    renderFolders();
 }
 
 // ===== RENDU DOSSIERS =====
@@ -96,7 +142,6 @@ function renderFolders() {
         `).join('')}
     `;
     
-    // Événements clic sur dossiers
     document.querySelectorAll('.folder-card').forEach(card => {
         card.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -104,7 +149,6 @@ function renderFolders() {
             selectFolder(folderId === '' ? null : folderId);
         });
         
-        // Appui long sur dossier
         if (card.dataset.folderId && card.dataset.folderId !== '') {
             let folderPressTimer;
             card.addEventListener('touchstart', () => {
@@ -115,13 +159,6 @@ function renderFolders() {
             });
             card.addEventListener('touchend', () => clearTimeout(folderPressTimer));
             card.addEventListener('touchcancel', () => clearTimeout(folderPressTimer));
-            card.addEventListener('mousedown', () => {
-                folderPressTimer = setTimeout(() => {
-                    const folder = folders.find(f => f.id === card.dataset.folderId);
-                    if (folder) openFolderActionsModal(folder);
-                }, 600);
-            });
-            card.addEventListener('mouseup', () => clearTimeout(folderPressTimer));
         }
     });
 }
@@ -133,45 +170,79 @@ function selectFolder(folderId) {
 }
 
 // ===== CHARGEMENT PHOTOS =====
-async function loadPhotos() {
+async function loadPhotos(syncFromServer = true) {
     if (!currentUser) return;
     
-    gallery.innerHTML = `<div class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Chargement…</p></div>`;
-    
-    let query = sb
-        .from('photos')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-    
-    if (currentFolderId === null) {
-        query = query.is('folder_id', null);
+    const cachedPhotos = loadPhotosFromLocalStorage();
+    if (cachedPhotos) {
+        photos = cachedPhotos.filter(p => {
+            if (currentFolderId === null) return p.folder_id === null;
+            return p.folder_id === currentFolderId;
+        });
+        if (searchQuery) {
+            photos = photos.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+        renderGallery();
     } else {
-        query = query.eq('folder_id', currentFolderId);
+        gallery.innerHTML = `<div class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Chargement…</p></div>`;
     }
     
-    const { data, error } = await query;
-    
-    if (error) {
-        notifyHeader(false);
-        return;
+    if (syncFromServer) {
+        try {
+            let query = sb
+                .from('photos')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if (currentFolderId === null) {
+                query = query.is('folder_id', null);
+            } else {
+                query = query.eq('folder_id', currentFolderId);
+            }
+            
+            const { data, error } = await query;
+            
+            if (!error && data) {
+                photos = data;
+                if (searchQuery) {
+                    photos = photos.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                }
+                renderGallery();
+                savePhotosToLocalStorage();
+            }
+        } catch (error) {
+            console.warn('Sync error:', error);
+        }
     }
-    
-    photos = data || [];
-    
-    if (searchQuery) {
-        photos = photos.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    
-    renderGallery();
 }
 
-// ===== RENDU GALERIE (scroll horizontal par ligne) =====
+// ===== LAZY LOADING IMAGES =====
+function lazyLoadImages() {
+    const images = document.querySelectorAll('.photo-img[data-src]');
+    if (images.length === 0) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                observer.unobserve(img);
+            }
+        }
+    }, { rootMargin: '100px' });
+    
+    for (let i = 0; i < images.length; i++) {
+        observer.observe(images[i]);
+    }
+}
+
+// ===== RENDU GALERIE OPTIMISÉ =====
 function renderGallery() {
     const cardSize = parseInt(sizeSlider.value);
     sizeValue.textContent = cardSize + 'px';
-    
-    // Appliquer la taille aux cartes
     document.documentElement.style.setProperty('--card-size', cardSize + 'px');
     
     if (photos.length === 0) {
@@ -180,42 +251,55 @@ function renderGallery() {
         return;
     }
     
-    // Grouper par date
+    const fragment = document.createDocumentFragment();
     const grouped = groupPhotosByDate(photos);
     
-    gallery.innerHTML = '';
     for (const [dateLabel, groupPhotos] of Object.entries(grouped)) {
         const section = document.createElement('div');
         section.className = 'date-section';
-        section.innerHTML = `
-            <div class="date-header">${dateLabel}</div>
-            <div class="date-photos" id="date-photos-${dateLabel.replace(/\s/g, '')}"></div>
-        `;
-        gallery.appendChild(section);
         
-        const photosContainer = section.querySelector('.date-photos');
-        photosContainer.innerHTML = groupPhotos.map(photo => {
+        const header = document.createElement('div');
+        header.className = 'date-header';
+        header.textContent = dateLabel;
+        section.appendChild(header);
+        
+        const photosContainer = document.createElement('div');
+        photosContainer.className = 'date-photos';
+        
+        for (let i = 0; i < groupPhotos.length; i++) {
+            const photo = groupPhotos[i];
             const isSelected = selectedPhotos.has(photo.id);
-            const shortName = photo.name.length > 15 ? photo.name.substring(0, 12) + '…' : photo.name;
-            return `
-                <div class="photo-card ${multiSelectMode ? 'multi-select-mode' : ''} ${isSelected ? 'selected' : ''}"
-                     data-id="${photo.id}"
-                     data-name="${escapeHtml(photo.name)}"
-                     data-url="${photo.url}">
-                    <div class="photo-checkbox">
-                        <input type="checkbox" class="photo-check" ${isSelected ? 'checked' : ''}>
-                    </div>
-                    <div class="photo-frame">
-                        <img class="photo-img" src="${photo.url}" alt="${escapeHtml(photo.name)}" loading="lazy">
-                    </div>
-                    <div class="photo-name">${escapeHtml(shortName)}</div>
-                </div>`;
-        }).join('');
+            const shortName = photo.name.length > 20 ? photo.name.substring(0, 17) + '…' : photo.name;
+            
+            const card = document.createElement('div');
+            card.className = `photo-card ${multiSelectMode ? 'multi-select-mode' : ''} ${isSelected ? 'selected' : ''}`;
+            card.dataset.id = photo.id;
+            card.dataset.name = photo.name;
+            card.dataset.url = photo.url;
+            
+            card.innerHTML = `
+                <div class="photo-checkbox">
+                    <input type="checkbox" class="photo-check" ${isSelected ? 'checked' : ''}>
+                </div>
+                <div class="photo-frame">
+                    <img class="photo-img" data-src="${photo.url}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="${escapeHtml(photo.name)}">
+                </div>
+                <div class="photo-name">${escapeHtml(shortName)}</div>
+            `;
+            
+            photosContainer.appendChild(card);
+        }
+        
+        section.appendChild(photosContainer);
+        fragment.appendChild(section);
     }
     
-    const n = photos.length;
-    photoCountSpan.textContent = `📷 ${n} photo${n > 1 ? 's' : ''}`;
-    attachCardEvents();
+    gallery.innerHTML = '';
+    gallery.appendChild(fragment);
+    lazyLoadImages();
+    
+    photoCountSpan.textContent = `📷 ${photos.length} photo${photos.length > 1 ? 's' : ''}`;
+    attachCardEventsOptimized();
 }
 
 function groupPhotosByDate(photosArray) {
@@ -229,7 +313,8 @@ function groupPhotosByDate(photosArray) {
     const monthStart = new Date(today);
     monthStart.setMonth(monthStart.getMonth() - 1);
     
-    photosArray.forEach(photo => {
+    for (let i = 0; i < photosArray.length; i++) {
+        const photo = photosArray[i];
         const photoDate = new Date(photo.created_at);
         let label = '';
         
@@ -241,16 +326,23 @@ function groupPhotosByDate(photosArray) {
         
         if (!groups[label]) groups[label] = [];
         groups[label].push(photo);
-    });
+    }
     
     return groups;
 }
 
-// ===== ÉVÉNEMENTS CARTES =====
-function attachCardEvents() {
-    document.querySelectorAll('.photo-card').forEach(card => {
+// ===== VERSION OPTIMISÉE AVEC DIFFÉRENCIATION SCROLL/CLIC =====
+function attachCardEventsOptimized() {
+    const cards = document.querySelectorAll('.photo-card');
+    
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
         const id = card.dataset.id;
         const checkbox = card.querySelector('.photo-check');
+        
+        let touchTimer = null;
+        let hasMoved = false;
+        let startX, startY;
         
         if (checkbox) {
             checkbox.addEventListener('change', (e) => {
@@ -265,52 +357,117 @@ function attachCardEvents() {
             });
         }
         
-        let longPressTriggered = false;
-        
-        function onPressStart() {
-            longPressTriggered = false;
-            pressTimer = setTimeout(() => {
-                longPressTriggered = true;
-                selectedPhotos.add(id);
-                updateActionBar();
-                if (navigator.vibrate) navigator.vibrate(30);
-            }, 600);
-        }
-        
-        function onPressEnd() {
-            clearTimeout(pressTimer);
-        }
-        
-        card.addEventListener('touchstart', onPressStart, { passive: true });
-        card.addEventListener('touchend', onPressEnd);
-        card.addEventListener('touchcancel', onPressEnd);
-        card.addEventListener('mousedown', onPressStart);
-        card.addEventListener('mouseup', onPressEnd);
-        
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('.photo-checkbox')) return;
-            if (longPressTriggered) return;
-            
-            if (multiSelectMode) {
-                if (selectedPhotos.has(id)) {
-                    selectedPhotos.delete(id);
-                    if (checkbox) checkbox.checked = false;
-                    card.classList.remove('selected');
-                } else {
-                    selectedPhotos.add(id);
-                    if (checkbox) checkbox.checked = true;
-                    card.classList.add('selected');
-                }
-                updateActionBar();
-            } else {
-                const photo = photos.find(p => p.id === id);
-                if (photo) openViewer(photo.url);
+        // TOUCH START
+        card.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                hasMoved = false;
+                touchTimer = setTimeout(() => {
+                    if (!hasMoved) {
+                        // APPUI LONG
+                        selectedPhotos.add(id);
+                        updateActionBar();
+                        card.classList.add('selected');
+                        if (checkbox) checkbox.checked = true;
+                        if (navigator.vibrate) navigator.vibrate(30);
+                    }
+                }, 600);
             }
         });
-    });
+        
+        // TOUCH MOVE (détection scroll)
+        card.addEventListener('touchmove', (e) => {
+            if (startX && startY && e.touches.length === 1) {
+                const deltaX = Math.abs(e.touches[0].clientX - startX);
+                const deltaY = Math.abs(e.touches[0].clientY - startY);
+                if (deltaX > 10 || deltaY > 10) {
+                    hasMoved = true;
+                    clearTimeout(touchTimer);
+                }
+            }
+        });
+        
+        // TOUCH END
+        card.addEventListener('touchend', () => {
+            clearTimeout(touchTimer);
+            if (!hasMoved && touchTimer) {
+                // APPUI COURT (clic)
+                if (multiSelectMode) {
+                    if (selectedPhotos.has(id)) {
+                        selectedPhotos.delete(id);
+                        if (checkbox) checkbox.checked = false;
+                        card.classList.remove('selected');
+                    } else {
+                        selectedPhotos.add(id);
+                        if (checkbox) checkbox.checked = true;
+                        card.classList.add('selected');
+                    }
+                    updateActionBar();
+                } else {
+                    const photo = photos.find(p => p.id === id);
+                    if (photo) openViewer(photo.url);
+                }
+            }
+            hasMoved = false;
+            startX = null;
+            startY = null;
+            touchTimer = null;
+        });
+        
+        card.addEventListener('touchcancel', () => {
+            clearTimeout(touchTimer);
+            hasMoved = false;
+            touchTimer = null;
+        });
+        
+        // MOUSE SUPPORT (pour debug)
+        let mouseLongPress = null;
+        let mouseMoved = false;
+        
+        card.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            mouseMoved = false;
+            mouseLongPress = setTimeout(() => {
+                if (!mouseMoved) {
+                    selectedPhotos.add(id);
+                    updateActionBar();
+                    card.classList.add('selected');
+                    if (checkbox) checkbox.checked = true;
+                }
+            }, 600);
+        });
+        
+        card.addEventListener('mousemove', () => {
+            mouseMoved = true;
+            clearTimeout(mouseLongPress);
+        });
+        
+        card.addEventListener('mouseup', () => {
+            clearTimeout(mouseLongPress);
+            if (!mouseMoved && mouseLongPress) {
+                if (multiSelectMode) {
+                    if (selectedPhotos.has(id)) {
+                        selectedPhotos.delete(id);
+                        if (checkbox) checkbox.checked = false;
+                        card.classList.remove('selected');
+                    } else {
+                        selectedPhotos.add(id);
+                        if (checkbox) checkbox.checked = true;
+                        card.classList.add('selected');
+                    }
+                    updateActionBar();
+                } else {
+                    const photo = photos.find(p => p.id === id);
+                    if (photo) openViewer(photo.url);
+                }
+            }
+            mouseMoved = false;
+        });
+    }
 }
 
-// ===== BARRE D'ACTION (remplace la recherche dans footer) =====
+// ===== BARRE D'ACTION =====
 function updateActionBar() {
     multiSelectMode = selectedPhotos.size > 0;
     
@@ -322,25 +479,31 @@ function updateActionBar() {
         actionBar.classList.remove('active');
     }
     
-    document.querySelectorAll('.photo-card').forEach(card => {
+    const cards = document.querySelectorAll('.photo-card');
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
         const id = card.dataset.id;
         const isSelected = selectedPhotos.has(id);
         card.classList.toggle('selected', isSelected);
         card.classList.toggle('multi-select-mode', multiSelectMode);
         const cb = card.querySelector('.photo-check');
         if (cb) cb.checked = isSelected;
-    });
+    }
 }
 
-// ===== RECHERCHE EN TEMPS RÉEL =====
+// ===== RECHERCHE =====
 function initSearch() {
+    let searchTimeout;
     searchInput.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        loadPhotos();
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchQuery = e.target.value;
+            loadPhotos(true);
+        }, 300);
     });
 }
 
-// ===== VIEWER AVEC ZOOM =====
+// ===== VIEWER =====
 const viewerOverlay = document.getElementById('viewerOverlay');
 const viewerImg = document.getElementById('viewerImg');
 const viewerContainer = document.getElementById('viewerContainer');
@@ -370,7 +533,6 @@ function resetZoom() {
     viewerImg.style.transform = `translate(0px, 0px) scale(1)`;
 }
 
-// Zoom tactile
 viewerContainer.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
         e.preventDefault();
@@ -401,7 +563,6 @@ viewerContainer.addEventListener('touchend', () => {
     isZooming = false;
 });
 
-// Double-clic pour zoomer
 viewerImg.addEventListener('dblclick', (e) => {
     e.stopPropagation();
     if (currentScale > 1) {
@@ -452,7 +613,7 @@ async function deleteFolder(folderId, folderName) {
     
     notifyHeader(true);
     await loadFolders();
-    await loadPhotos();
+    await loadPhotos(true);
     return true;
 }
 
@@ -573,6 +734,7 @@ async function uploadPhotos(files) {
     
     let uploaded = 0;
     const toUpload = [...uploadQueue];
+    const newPhotos = [];
     
     for (const item of toUpload) {
         if (uploadCancelled) break;
@@ -587,14 +749,19 @@ async function uploadPhotos(files) {
             
             const { data: urlData } = sb.storage.from('photos').getPublicUrl(filePath);
             
-            const { error: dbError } = await sb.from('photos').insert({
+            const newPhoto = {
                 name: item.name,
                 url: urlData.publicUrl,
                 user_id: currentUser.id,
                 storage_path: filePath,
-                folder_id: currentFolderId
-            });
+                folder_id: currentFolderId,
+                created_at: new Date().toISOString()
+            };
+            
+            const { data: inserted, error: dbError } = await sb.from('photos').insert(newPhoto).select().single();
             if (dbError) throw new Error(dbError.message);
+            
+            newPhotos.push(inserted);
             
             item.done = true;
             uploaded++;
@@ -609,8 +776,10 @@ async function uploadPhotos(files) {
     uploadInProgress = false;
     
     if (!uploadCancelled && uploaded > 0) {
+        photos = [...newPhotos, ...photos];
+        savePhotosToLocalStorage();
+        await loadPhotos(true);
         notifyHeader(true);
-        await loadPhotos();
     } else if (uploaded === 0) {
         notifyHeader(false);
     }
@@ -666,7 +835,7 @@ async function movePhotosToFolder(photoIds, targetFolderId, isCopy = false) {
         progressModal.classList.remove('active');
     }, 500);
     
-    await loadPhotos();
+    await loadPhotos(true);
     selectedPhotos.clear();
     updateActionBar();
     notifyHeader(true);
@@ -688,10 +857,13 @@ async function deletePhotos(photoIds) {
         return;
     }
     
+    photos = photos.filter(p => !ids.includes(p.id));
+    savePhotosToLocalStorage();
+    
     notifyHeader(true);
     selectedPhotos.clear();
     updateActionBar();
-    await loadPhotos();
+    await loadPhotos(true);
 }
 
 // ===== RENOMMER PHOTO =====
@@ -701,8 +873,13 @@ async function renamePhoto(photoId, newName) {
         notifyHeader(false);
         return;
     }
+    
+    const photo = photos.find(p => p.id === photoId);
+    if (photo) photo.name = newName;
+    savePhotosToLocalStorage();
+    
     notifyHeader(true);
-    await loadPhotos();
+    await loadPhotos(true);
 }
 
 // ===== TÉLÉCHARGER PHOTOS =====
@@ -890,6 +1067,8 @@ function toggleTheme() {
 
 // ===== DÉCONNEXION =====
 async function logout() {
+    localStorage.removeItem(`${STORAGE_KEY}_${currentUser.id}`);
+    localStorage.removeItem(`${FOLDERS_KEY}_${currentUser.id}`);
     await sb.auth.signOut();
     window.location.href = 'login.html';
 }
@@ -927,66 +1106,66 @@ async function init() {
     initTheme();
     initSearch();
     await loadFolders();
-    await loadPhotos();
+    await loadPhotos(true);
     
     // Header events
-    document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
-    document.getElementById('siteName').addEventListener('click', () => loadPhotos());
-    document.getElementById('logoBtn').addEventListener('click', () => location.reload());
+    document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
+    document.getElementById('siteName')?.addEventListener('click', () => loadPhotos(true));
+    document.getElementById('logoBtn')?.addEventListener('click', () => location.reload());
     
     // Slider
     sizeSlider.addEventListener('input', () => renderGallery());
     
     // Sidebar
-    document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
+    document.getElementById('closeSidebarBtn')?.addEventListener('click', closeSidebar);
     sidebarOverlay.addEventListener('click', closeSidebar);
     
-    document.getElementById('profileBtn').addEventListener('click', () => {
+    document.getElementById('profileBtn')?.addEventListener('click', () => {
         closeSidebar();
         openModal('profilModalOverlay', 'profilModal');
     });
     
-    document.getElementById('themeBtn').addEventListener('click', () => {
+    document.getElementById('themeBtn')?.addEventListener('click', () => {
         closeSidebar();
         toggleTheme();
     });
     
-    document.getElementById('infoBtn').addEventListener('click', () => {
+    document.getElementById('infoBtn')?.addEventListener('click', () => {
         closeSidebar();
         window.location.href = 'info.html';
     });
     
     // Profil modal
-    document.getElementById('closeProfilModal').addEventListener('click', () => {
+    document.getElementById('closeProfilModal')?.addEventListener('click', () => {
         closeModal('profilModalOverlay', 'profilModal');
     });
-    document.getElementById('profilModalOverlay').addEventListener('click', (e) => {
+    document.getElementById('profilModalOverlay')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('profilModalOverlay'))
             closeModal('profilModalOverlay', 'profilModal');
     });
     
     let passwordVisible = false;
-    document.getElementById('togglePasswordBtn').addEventListener('click', () => {
+    document.getElementById('togglePasswordBtn')?.addEventListener('click', () => {
         passwordVisible = !passwordVisible;
         document.getElementById('profilePassword').type = passwordVisible ? 'text' : 'password';
         document.getElementById('togglePasswordBtn').innerHTML = `<i class="fas fa-eye${passwordVisible ? '-slash' : ''}"></i>`;
     });
     
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
         closeModal('profilModalOverlay', 'profilModal');
         openModal('confirmLogoutOverlay', 'confirmLogoutModal');
     });
     
-    document.getElementById('closeConfirmLogout').addEventListener('click', () => {
+    document.getElementById('closeConfirmLogout')?.addEventListener('click', () => {
         closeModal('confirmLogoutOverlay', 'confirmLogoutModal');
     });
-    document.getElementById('cancelLogoutBtn').addEventListener('click', () => {
+    document.getElementById('cancelLogoutBtn')?.addEventListener('click', () => {
         closeModal('confirmLogoutOverlay', 'confirmLogoutModal');
     });
-    document.getElementById('confirmLogoutBtn').addEventListener('click', logout);
+    document.getElementById('confirmLogoutBtn')?.addEventListener('click', logout);
     
     // Action bar
-    document.getElementById('renameActionBtn').addEventListener('click', () => {
+    document.getElementById('renameActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size !== 1) return;
         const photo = photos.find(p => p.id === Array.from(selectedPhotos)[0]);
         if (photo) {
@@ -994,53 +1173,53 @@ async function init() {
             document.getElementById('renameInput').value = baseName;
         }
         openModal('renameModalOverlay', 'renameModal');
-        setTimeout(() => document.getElementById('renameInput').focus(), 350);
+        setTimeout(() => document.getElementById('renameInput')?.focus(), 350);
     });
     
-    document.getElementById('deleteActionBtn').addEventListener('click', () => {
+    document.getElementById('deleteActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size === 0) return;
         document.getElementById('deleteCount').textContent = selectedPhotos.size;
         openModal('deleteModalOverlay', 'deleteModal');
     });
     
-    document.getElementById('downloadActionBtn').addEventListener('click', () => {
+    document.getElementById('downloadActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size === 0) return;
         downloadPhotos(selectedPhotos);
     });
     
-    document.getElementById('infoActionBtn').addEventListener('click', () => {
+    document.getElementById('infoActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size !== 1) return;
         const photoId = Array.from(selectedPhotos)[0];
         showPhotoInfo(photoId);
     });
     
-    document.getElementById('moveActionBtn').addEventListener('click', () => {
+    document.getElementById('moveActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size === 0) return;
         openSelectFolderModal(async (folderId) => {
             await movePhotosToFolder(selectedPhotos, folderId, false);
         }, false);
     });
     
-    document.getElementById('copyActionBtn').addEventListener('click', () => {
+    document.getElementById('copyActionBtn')?.addEventListener('click', () => {
         if (selectedPhotos.size === 0) return;
         openSelectFolderModal(async (folderId) => {
             await movePhotosToFolder(selectedPhotos, folderId, true);
         }, true);
     });
     
-    document.getElementById('closeActionBtn').addEventListener('click', () => {
+    document.getElementById('closeActionBtn')?.addEventListener('click', () => {
         selectedPhotos.clear();
         updateActionBar();
     });
     
     // Rename modal
-    document.getElementById('closeRenameModal').addEventListener('click', () => {
+    document.getElementById('closeRenameModal')?.addEventListener('click', () => {
         closeModal('renameModalOverlay', 'renameModal');
     });
-    document.getElementById('cancelRenameBtn').addEventListener('click', () => {
+    document.getElementById('cancelRenameBtn')?.addEventListener('click', () => {
         closeModal('renameModalOverlay', 'renameModal');
     });
-    document.getElementById('confirmRenameBtn').addEventListener('click', async () => {
+    document.getElementById('confirmRenameBtn')?.addEventListener('click', async () => {
         const newName = document.getElementById('renameInput').value.trim();
         if (!newName) return;
         const photoId = Array.from(selectedPhotos)[0];
@@ -1054,29 +1233,29 @@ async function init() {
     });
     
     // Delete modal
-    document.getElementById('closeDeleteModal').addEventListener('click', () => {
+    document.getElementById('closeDeleteModal')?.addEventListener('click', () => {
         closeModal('deleteModalOverlay', 'deleteModal');
     });
-    document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+    document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
         closeModal('deleteModalOverlay', 'deleteModal');
     });
-    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
         closeModal('deleteModalOverlay', 'deleteModal');
         await deletePhotos(selectedPhotos);
     });
     
     // Create folder
-    document.getElementById('createFolderBtn').addEventListener('click', () => {
+    document.getElementById('createFolderBtn')?.addEventListener('click', () => {
         openModal('createFolderOverlay', 'createFolderModal');
-        setTimeout(() => document.getElementById('folderNameInput').focus(), 350);
+        setTimeout(() => document.getElementById('folderNameInput')?.focus(), 350);
     });
-    document.getElementById('closeCreateFolder').addEventListener('click', () => {
+    document.getElementById('closeCreateFolder')?.addEventListener('click', () => {
         closeModal('createFolderOverlay', 'createFolderModal');
     });
-    document.getElementById('cancelFolderBtn').addEventListener('click', () => {
+    document.getElementById('cancelFolderBtn')?.addEventListener('click', () => {
         closeModal('createFolderOverlay', 'createFolderModal');
     });
-    document.getElementById('confirmFolderBtn').addEventListener('click', async () => {
+    document.getElementById('confirmFolderBtn')?.addEventListener('click', async () => {
         const name = document.getElementById('folderNameInput').value.trim();
         if (name) {
             await createFolder(name);
@@ -1086,22 +1265,22 @@ async function init() {
     });
     
     // Info modal
-    document.getElementById('closeInfoModal').addEventListener('click', () => {
+    document.getElementById('closeInfoModal')?.addEventListener('click', () => {
         closeModal('infoModalOverlay', 'infoModal');
     });
-    document.getElementById('infoModalOverlay').addEventListener('click', (e) => {
+    document.getElementById('infoModalOverlay')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('infoModalOverlay'))
             closeModal('infoModalOverlay', 'infoModal');
     });
     
     // Progress modal close
-    document.getElementById('closeProgressModal').addEventListener('click', () => {
+    document.getElementById('closeProgressModal')?.addEventListener('click', () => {
         document.getElementById('progressOverlay').classList.remove('active');
         document.getElementById('progressModal').classList.remove('active');
     });
     
     // Upload
-    document.getElementById('uploadBtn').addEventListener('click', () => {
+    document.getElementById('uploadBtn')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.multiple = true;
@@ -1112,40 +1291,42 @@ async function init() {
         input.click();
     });
     
-    closeUploadModalBtn.addEventListener('click', () => {
+    closeUploadModalBtn?.addEventListener('click', () => {
         uploadCancelled = true;
         closeUploadModal();
     });
-    cancelUploadBtn.addEventListener('click', () => {
+    cancelUploadBtn?.addEventListener('click', () => {
         uploadCancelled = true;
         closeUploadModal();
     });
     
     // Viewer close
-    document.getElementById('viewerClose').addEventListener('click', closeViewer);
-    viewerOverlay.addEventListener('click', (e) => {
+    document.getElementById('viewerClose')?.addEventListener('click', closeViewer);
+    viewerOverlay?.addEventListener('click', (e) => {
         if (e.target === viewerOverlay) closeViewer();
     });
     
     // Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (viewerOverlay.classList.contains('active')) closeViewer();
-            else if (sidebar.classList.contains('active')) closeSidebar();
+            if (viewerOverlay?.classList.contains('active')) closeViewer();
+            else if (sidebar?.classList.contains('active')) closeSidebar();
         }
     });
 }
+
 // ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('[SW] Enregistré avec succès:', registration.scope);
-      })
-      .catch((error) => {
-        console.error('[SW] Erreur enregistrement:', error);
-      });
-  });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then((registration) => {
+                console.log('[SW] Enregistré:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('[SW] Erreur:', error);
+            });
+    });
 }
+
 // Démarrer
 init();
